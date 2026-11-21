@@ -1,0 +1,43 @@
+import {
+  isFulfilled,
+  isRejectedWithValue,
+  type Middleware,
+} from '@reduxjs/toolkit';
+import { notify } from '../../common/utils/notify';
+import { closeModal } from '../features/modalSlice';
+
+type RtkQueryMetaArg = {
+  type?: 'query' | 'mutation';
+  endpointName?: string;
+  originalArgs?: unknown;
+};
+
+export const handleSuccessAndError: Middleware =
+  (store) => (next) => (action) => {
+    if (isFulfilled(action)) {
+      const payload = action.payload as {
+        message?: string;
+      };
+      const meta = action.meta?.arg as RtkQueryMetaArg;
+
+      const successMessage =
+        payload?.message || meta?.endpointName + ' success';
+
+      if (meta?.type === 'mutation') {
+        notify('success', successMessage);
+        store.dispatch(closeModal());
+      }
+    }
+
+    if (isRejectedWithValue(action)) {
+      const payload = action.payload as {
+        data?: { message?: string };
+      };
+
+      const errorMessage = payload?.data?.message || 'Something went wrong';
+
+      notify('error', errorMessage);
+    }
+
+    return next(action);
+  };
