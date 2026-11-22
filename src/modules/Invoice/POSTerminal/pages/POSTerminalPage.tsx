@@ -3,6 +3,10 @@ import {
   ClearOutlined,
   DeleteOutlined,
   DollarOutlined,
+  EnvironmentOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
+  GlobalOutlined,
   MinusOutlined,
   PlusOutlined,
   ShoppingCartOutlined,
@@ -21,23 +25,26 @@ import {
   Space,
   Table,
   Tag,
+  Tooltip,
   Typography,
   message,
   type InputRef,
 } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useAppSelector } from '../../../../app/hooks/hooks';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import { SelectCustomer } from '../../../../common/SelectWithApi';
 import { useGetPOSProductListQuery } from '../api/posTerminalEndpoints';
 import POSPaymentModal from '../components/POSPaymentModal';
 import POSThermalReceiptModal from '../components/POSThermalReceiptModal';
-import type { IPOSCartItem, IPOSCompletedOrder } from '../types/posTerminalTypes';
+import type {
+  IPOSCartItem,
+  IPOSCompletedOrder,
+} from '../types/posTerminalTypes';
 import type { IProductList } from '../../../Catalog/Product/types/productTypes';
 
 const POSTerminalPage = () => {
-  const { selectedBranchId, locationName } = useAppSelector(
-    (state) => state.location,
-  );
+  const { isBranch, isWarehouse, locationName, selectedBranchId } =
+    useActiveLocation();
 
   const [search, setSearch] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(
@@ -53,6 +60,25 @@ const POSTerminalPage = () => {
   const [receiptModalOpen, setReceiptModalOpen] = useState<boolean>(false);
   const [completedOrder, setCompletedOrder] =
     useState<IPOSCompletedOrder | null>(null);
+  const [revealedCostProductIds, setRevealedCostProductIds] = useState<
+    Set<number | string>
+  >(new Set());
+
+  const toggleRevealCost = (
+    e: React.MouseEvent,
+    productId: number | string,
+  ) => {
+    e.stopPropagation();
+    setRevealedCostProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
 
   const barcodeInputRef = useRef<InputRef>(null);
 
@@ -66,6 +92,14 @@ const POSTerminalPage = () => {
   const products: IProductList[] = productData?.data || [];
 
   const handleAddToCart = useCallback((product: IProductList) => {
+    const stock = Number(product.stock_quantity ?? 0);
+    if (stock <= 0) {
+      message.warning(
+        `Cannot add "${product.title}": Product is out of stock.`,
+      );
+      return;
+    }
+
     const unitPrice = Number(
       product.base_price || product.mrp || product.wholesale_price || 0,
     );
@@ -151,7 +185,9 @@ const POSTerminalPage = () => {
   };
 
   const handleRemoveItem = (productId: number) => {
-    setCartItems((prev) => prev.filter((item) => item.product_id !== productId));
+    setCartItems((prev) =>
+      prev.filter((item) => item.product_id !== productId),
+    );
   };
 
   const handleClearCart = () => {
@@ -219,9 +255,7 @@ const POSTerminalPage = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onPressEnter={(e) =>
-                    handleBarcodeSubmit(
-                      (e.target as HTMLInputElement).value,
-                    )
+                    handleBarcodeSubmit((e.target as HTMLInputElement).value)
                   }
                   size='large'
                 />
@@ -234,15 +268,50 @@ const POSTerminalPage = () => {
                   allowClear
                   value={selectedCategory}
                   onChange={(val) => setSelectedCategory(val)}
-                  options={[
-                    { label: 'All Categories', value: undefined },
-                  ]}
+                  options={[{ label: 'All Categories', value: undefined }]}
                 />
               </Col>
               <Col xs={12} sm={6} md={6} style={{ textAlign: 'right' }}>
-                <Tag color='geekblue' style={{ padding: '6px 12px', fontSize: 13 }}>
-                  Branch: {locationName || 'Central'}
-                </Tag>
+                {isBranch ? (
+                  <Tag
+                    color='blue'
+                    style={{
+                      padding: '6px 14px',
+                      fontSize: 13,
+                      borderRadius: 6,
+                      fontWeight: 500,
+                    }}
+                  >
+                    <EnvironmentOutlined style={{ marginRight: 6 }} />
+                    {locationName}
+                  </Tag>
+                ) : isWarehouse ? (
+                  <Tag
+                    color='cyan'
+                    style={{
+                      padding: '6px 14px',
+                      fontSize: 13,
+                      borderRadius: 6,
+                      fontWeight: 500,
+                    }}
+                  >
+                    <EnvironmentOutlined style={{ marginRight: 6 }} />
+                    {locationName}
+                  </Tag>
+                ) : (
+                  <Tag
+                    color='gold'
+                    style={{
+                      padding: '6px 14px',
+                      fontSize: 13,
+                      borderRadius: 6,
+                      fontWeight: 500,
+                    }}
+                  >
+                    <GlobalOutlined style={{ marginRight: 6 }} />
+                    All Locations (Global)
+                  </Tag>
+                )}
               </Col>
             </Row>
           </Card>
@@ -264,10 +333,14 @@ const POSTerminalPage = () => {
                       product.wholesale_price ||
                       0,
                   );
+                  const stock = Number(product.stock_quantity ?? 0);
+                  const isOutOfStock = stock <= 0;
+                  const isCostVisible = revealedCostProductIds.has(product.id);
+
                   return (
                     <Col xs={12} sm={8} md={6} xl={4} key={product.id}>
                       <Card
-                        hoverable
+                        hoverable={!isOutOfStock}
                         size='small'
                         onClick={() => handleAddToCart(product)}
                         style={{
@@ -277,44 +350,163 @@ const POSTerminalPage = () => {
                           justifyContent: 'space-between',
                           borderRadius: 8,
                           textAlign: 'center',
-                          border: '1px solid #f0f0f0',
+                          border: isOutOfStock
+                            ? '1px dashed #ffccc7'
+                            : '1px solid #f0f0f0',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          opacity: isOutOfStock ? 0.72 : 1,
+                          cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                         }}
                         cover={
-                          product.primary_image ? (
-                            <img
-                              alt={product.title}
-                              src={product.primary_image}
-                              style={{
-                                height: 100,
-                                objectFit: 'contain',
-                                padding: 8,
-                                background: '#fafafa',
-                              }}
-                            />
-                          ) : (
+                          <div
+                            style={{
+                              position: 'relative',
+                              height: 110,
+                              background: '#fafafa',
+                            }}
+                          >
                             <div
                               style={{
-                                height: 100,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: '#f5f5f5',
-                                color: '#bfbfbf',
+                                position: 'absolute',
+                                top: 6,
+                                left: 6,
+                                zIndex: 2,
                               }}
                             >
-                              <BarcodeOutlined style={{ fontSize: 32 }} />
+                              {stock > 10 ? (
+                                <Tag
+                                  color='success'
+                                  style={{
+                                    fontSize: 10,
+                                    margin: 0,
+                                    padding: '0 6px',
+                                    fontWeight: 600,
+                                    borderRadius: 4,
+                                  }}
+                                >
+                                  Stock: {stock}
+                                </Tag>
+                              ) : stock > 0 ? (
+                                <Tag
+                                  color='warning'
+                                  style={{
+                                    fontSize: 10,
+                                    margin: 0,
+                                    padding: '0 6px',
+                                    fontWeight: 600,
+                                    borderRadius: 4,
+                                  }}
+                                >
+                                  Low: {stock}
+                                </Tag>
+                              ) : (
+                                <Tag
+                                  color='error'
+                                  style={{
+                                    fontSize: 10,
+                                    margin: 0,
+                                    padding: '0 6px',
+                                    fontWeight: 600,
+                                    borderRadius: 4,
+                                  }}
+                                >
+                                  Out of Stock
+                                </Tag>
+                              )}
                             </div>
-                          )
+
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: 4,
+                                right: 4,
+                                zIndex: 2,
+                              }}
+                            >
+                              <Tooltip
+                                title={
+                                  isCostVisible
+                                    ? 'Hide Purchase Cost'
+                                    : 'View Purchase Cost'
+                                }
+                              >
+                                <Button
+                                  type='text'
+                                  size='small'
+                                  shape='circle'
+                                  icon={
+                                    isCostVisible ? (
+                                      <EyeInvisibleOutlined
+                                        style={{
+                                          color: '#722ed1',
+                                          fontSize: 13,
+                                        }}
+                                      />
+                                    ) : (
+                                      <EyeOutlined
+                                        style={{
+                                          color: '#8c8c8c',
+                                          fontSize: 13,
+                                        }}
+                                      />
+                                    )
+                                  }
+                                  onClick={(e) =>
+                                    toggleRevealCost(e, product.id)
+                                  }
+                                  style={{
+                                    width: 24,
+                                    height: 24,
+                                    minWidth: 24,
+                                    background: 'rgba(255,255,255,0.85)',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                                  }}
+                                />
+                              </Tooltip>
+                            </div>
+
+                            {product.primary_image ? (
+                              <img
+                                alt={product.title}
+                                src={product.primary_image}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'contain',
+                                  padding: 8,
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#bfbfbf',
+                                }}
+                              >
+                                <BarcodeOutlined style={{ fontSize: 36 }} />
+                              </div>
+                            )}
+                          </div>
                         }
                       >
                         <div
                           style={{
                             fontWeight: 600,
-                            fontSize: 12,
+                            fontSize: 13,
                             lineHeight: 1.3,
-                            height: 32,
+                            height: 34,
                             overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
                             marginBottom: 4,
+                            color: '#262626',
                           }}
                           title={product.title}
                         >
@@ -324,19 +516,46 @@ const POSTerminalPage = () => {
                           style={{
                             fontSize: 10,
                             color: '#8c8c8c',
-                            marginBottom: 4,
+                            marginBottom: 6,
                           }}
                         >
                           {product.sku}
                         </div>
                         <div
                           style={{
-                            fontWeight: 700,
-                            fontSize: 13,
-                            color: '#0958d9',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 4,
                           }}
                         >
-                          ৳{price.toLocaleString()}
+                          <div
+                            style={{
+                              fontWeight: 700,
+                              fontSize: 14,
+                              color: '#0958d9',
+                            }}
+                          >
+                            ৳{price.toLocaleString()}
+                          </div>
+
+                          {isCostVisible && (
+                            <Tag
+                              color='purple'
+                              style={{
+                                fontSize: 10,
+                                margin: 0,
+                                padding: '1px 6px',
+                                borderRadius: 4,
+                                fontWeight: 600,
+                              }}
+                            >
+                              Cost: ৳
+                              {Number(
+                                product.purchase_price || 0,
+                              ).toLocaleString()}
+                            </Tag>
+                          )}
                         </div>
                       </Card>
                     </Col>
@@ -570,8 +789,8 @@ const POSTerminalPage = () => {
               }}
             >
               Shortcuts: <strong>F2</strong> (Search/Scan) &nbsp;|&nbsp;{' '}
-              <strong>F4</strong> (Checkout) &nbsp;|&nbsp;{' '}
-              <strong>Esc</strong> (Close)
+              <strong>F4</strong> (Checkout) &nbsp;|&nbsp; <strong>Esc</strong>{' '}
+              (Close)
             </div>
           </Card>
         </Col>

@@ -118,18 +118,8 @@ const ViewProduct = ({ id }: Props) => {
             {product.status}
           </Tag>
         </Descriptions.Item>
-        <Descriptions.Item label='Featured'>
-          {product.is_featured ? (
-            <Tag color='gold'>FEATURED</Tag>
-          ) : (
-            <Tag>STANDARD</Tag>
-          )}
-        </Descriptions.Item>
         <Descriptions.Item label='Barcode'>
           {product.barcode || 'N/A'}
-        </Descriptions.Item>
-        <Descriptions.Item label='Weight'>
-          {product.weight_grams ? `${product.weight_grams}g` : 'N/A'}
         </Descriptions.Item>
         <Descriptions.Item label='Created At'>
           {product.created_at ? dateAndTimeFormat(product.created_at) : 'N/A'}

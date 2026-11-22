@@ -512,21 +512,6 @@ export const navItems: INavItem[] = [
     ],
   },
   {
-    key: '/support',
-    to: '/support/tickets',
-    label: 'Help & Support',
-    icon: 'solar:chat-round-call-bold-duotone',
-    children: [
-      {
-        key: '/support/tickets',
-        to: '/support/tickets',
-        label: 'Support Tickets',
-        icon: 'ic:twotone-list',
-        name: 'SUPPORT_TICKET',
-      },
-    ],
-  },
-  {
     key: '/administration',
     to: '/administration',
     label: 'Administration',

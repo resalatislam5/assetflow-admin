@@ -4,6 +4,7 @@ import type { Response } from '../../../common/types/common.type';
 import type {
   IEcommerceDashboardData,
   IEcommerceSummary,
+  ILowStockAlert,
   IRecentOrder,
   ISalesTrend,
   ITopProduct,
@@ -11,9 +12,10 @@ import type {
 
 const dashboardEndpoints = api.injectEndpoints({
   endpoints: (build) => ({
-    getEcommerceDashboard: build.query<Response<IEcommerceDashboardData>, void>({
-      query: () => ({
+    getEcommerceDashboard: build.query<Response<IEcommerceDashboardData>, { year?: number } | void>({
+      query: (params) => ({
         url: '/admin/dashboard',
+        params: params ? { year: params.year } : undefined,
       }),
       providesTags: () => [CREATE_TAG('DASHBOARD')],
     }),
@@ -29,15 +31,21 @@ const dashboardEndpoints = api.injectEndpoints({
       }),
       providesTags: () => [CREATE_TAG('DASHBOARD')],
     }),
-    getRecentOrders: build.query<Response<IRecentOrder[]>, void>({
-      query: () => ({
-        url: '/admin/dashboard/recent-orders',
+    getRecentOrders: build.query<Response<IRecentOrder[]>, { limit?: number } | void>({
+      query: (params) => ({
+        url: `/admin/dashboard/recent-orders${params?.limit ? `?limit=${params.limit}` : ''}`,
       }),
       providesTags: () => [CREATE_TAG('DASHBOARD')],
     }),
-    getTopProducts: build.query<Response<ITopProduct[]>, void>({
-      query: () => ({
-        url: '/admin/dashboard/top-products',
+    getTopProducts: build.query<Response<ITopProduct[]>, { limit?: number } | void>({
+      query: (params) => ({
+        url: `/admin/dashboard/top-products${params?.limit ? `?limit=${params.limit}` : ''}`,
+      }),
+      providesTags: () => [CREATE_TAG('DASHBOARD')],
+    }),
+    getLowStockItems: build.query<Response<ILowStockAlert[]>, { limit?: number } | void>({
+      query: (params) => ({
+        url: `/admin/dashboard/low-stock${params?.limit ? `?limit=${params.limit}` : ''}`,
       }),
       providesTags: () => [CREATE_TAG('DASHBOARD')],
     }),
@@ -50,4 +58,5 @@ export const {
   useGetSalesTrendQuery,
   useGetRecentOrdersQuery,
   useGetTopProductsQuery,
+  useGetLowStockItemsQuery,
 } = dashboardEndpoints;

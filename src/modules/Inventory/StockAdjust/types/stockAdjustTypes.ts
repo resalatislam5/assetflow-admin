@@ -41,7 +41,7 @@ export interface IStockAdjustment {
 
 export interface ICreateStockAdjustmentPayload {
   branch_id?: number;
-  warehouse_id: number;
+  warehouse_id?: number;
   product_id: number;
   variant_id?: number;
   batch_id?: number;

@@ -2,7 +2,6 @@ import {
   Badge,
   Button,
   Card,
-  Col,
   Empty,
   Flex,
   Form,
@@ -87,7 +86,6 @@ const ProductInputs = ({ onFinish, loading, form, editMode }: Props) => {
         alert_quantity: 5,
         has_warranty: false,
         warranty_days: 0,
-        is_featured: false,
         is_pos_favorite: false,
         pos_display_order: 0,
         has_variants: false,
@@ -387,16 +385,6 @@ const ProductInputs = ({ onFinish, loading, form, editMode }: Props) => {
             md={12}
             lg={6}
           />
-          <FormInputNumber
-            name='weight_grams'
-            label='Weight (grams)'
-            placeholder='0'
-            min={0}
-            xs={24}
-            sm={12}
-            md={12}
-            lg={6}
-          />
         </Row>
       </Card>
 
@@ -459,18 +447,6 @@ const ProductInputs = ({ onFinish, loading, form, editMode }: Props) => {
             lg={6}
           />
           <FormInputSelect
-            name='is_featured'
-            label='Featured Product'
-            xs={24}
-            sm={12}
-            md={12}
-            lg={6}
-            options={[
-              { label: 'No', value: false },
-              { label: 'Yes', value: true },
-            ]}
-          />
-          <FormInputSelect
             name='has_variants'
             label='Has Variants'
             xs={24}
@@ -482,16 +458,6 @@ const ProductInputs = ({ onFinish, loading, form, editMode }: Props) => {
               { label: 'Yes (Multiple Variants)', value: true },
             ]}
           />
-          <Col xs={24} sm={12} md={12} lg={12}>
-            <Form.Item name='tags' label='Tags' layout='vertical'>
-              <Select
-                mode='tags'
-                placeholder='Add search tags'
-                style={{ width: '100%' }}
-                allowClear
-              />
-            </Form.Item>
-          </Col>
         </Row>
       </Card>
 

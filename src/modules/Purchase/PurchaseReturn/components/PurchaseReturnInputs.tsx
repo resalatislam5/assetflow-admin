@@ -10,7 +10,7 @@ import {
   type FormInstance,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import FromSubmit from '../../../../common/Button/FromSubmit';
 import {
   FormInputDate,
@@ -29,6 +29,7 @@ import {
   useGetProductSelectQuery,
   type IProductSelect,
 } from '../../../../common/SelectWithApi';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import {
   useGetPurchaseListQuery,
   useGetSinglePurchaseQuery,
@@ -42,9 +43,25 @@ type Props = {
 };
 
 const PurchaseReturnInputs = ({ onFinish, loading, form }: Props) => {
+  const { isBranch, isWarehouse } = useActiveLocation();
   const selectedPurchaseId = Form.useWatch('purchase_id', form);
   const items = Form.useWatch('items', form) || [];
   const refundAmount = Number(Form.useWatch('refund_amount', form) || 0);
+
+  const watchedBranchId = Form.useWatch('branch_id', form);
+  const watchedWarehouseId = Form.useWatch('warehouse_id', form);
+  const [destinationType, setDestinationType] = useState<'WAREHOUSE' | 'BRANCH'>(() => {
+    if (isBranch) return 'BRANCH';
+    return 'WAREHOUSE';
+  });
+
+  useEffect(() => {
+    if (watchedBranchId && !watchedWarehouseId && destinationType !== 'BRANCH') {
+      setDestinationType('BRANCH');
+    } else if (watchedWarehouseId && !watchedBranchId && destinationType !== 'WAREHOUSE') {
+      setDestinationType('WAREHOUSE');
+    }
+  }, [watchedBranchId, watchedWarehouseId, destinationType]);
 
   const { data: purchaseListRes, isLoading: isPurchasesLoading } =
     useGetPurchaseListQuery({ limit: 100 });
@@ -155,18 +172,43 @@ const PurchaseReturnInputs = ({ onFinish, loading, form }: Props) => {
           md={12}
           lg={8}
         />
-        <SelectBranch
-          name='branch_id'
-          label='Branch'
-          md={12}
-          lg={8}
-        />
-        <SelectWarehouse
-          name='warehouse_id'
-          label='Warehouse'
-          md={12}
-          lg={8}
-        />
+        {!isBranch && !isWarehouse && (
+          <Col xs={24} sm={12} md={12} lg={8}>
+            <Form.Item label='Return Destination' style={{ marginBottom: 16 }}>
+              <Select
+                value={destinationType}
+                onChange={(val: 'WAREHOUSE' | 'BRANCH') => {
+                  setDestinationType(val);
+                  if (val === 'WAREHOUSE') {
+                    form.setFieldValue('branch_id', undefined);
+                  } else {
+                    form.setFieldValue('warehouse_id', undefined);
+                  }
+                }}
+                options={[
+                  { label: 'Warehouse', value: 'WAREHOUSE' },
+                  { label: 'Branch', value: 'BRANCH' },
+                ]}
+              />
+            </Form.Item>
+          </Col>
+        )}
+        {!isBranch && (!isWarehouse ? destinationType === 'BRANCH' : false) && (
+          <SelectBranch
+            name='branch_id'
+            label='Return Branch'
+            md={12}
+            lg={8}
+          />
+        )}
+        {!isWarehouse && (!isBranch ? destinationType === 'WAREHOUSE' : false) && (
+          <SelectWarehouse
+            name='warehouse_id'
+            label='Return Warehouse'
+            md={12}
+            lg={8}
+          />
+        )}
         <FormInputDate
           name='return_date'
           label='Return Date'

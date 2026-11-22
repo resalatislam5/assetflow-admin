@@ -1,6 +1,6 @@
 import { Card, Form, Row } from 'antd';
 import { useForm } from 'antd/es/form/Form';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch } from '../../../../app/hooks/hooks';
 import { closeModal } from '../../../../app/features/modalSlice';
 import FromSubmit from '../../../../common/Button/FromSubmit';
@@ -11,21 +11,33 @@ import {
 } from '../../../../common/Form/FormIInput';
 import { sanitizeObjectValue } from '../../../../common/utils/sanitizeObjectValue';
 import {
+  SelectBranch,
   SelectProduct,
   SelectWarehouse,
   useGetProductSelectQuery,
 } from '../../../../common/SelectWithApi';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import { useCreateStockAdjustmentMutation } from '../api/stockAdjustEndpoints';
 import type { ICreateStockAdjustmentPayload } from '../types/stockAdjustTypes';
 
 const CreateStockAdjustModal = () => {
   const [form] = useForm<ICreateStockAdjustmentPayload>();
   const dispatch = useAppDispatch();
+  const { isBranch, selectedBranchId, isWarehouse, selectedWarehouseId } = useActiveLocation();
   const [createStockAdjustment, { isLoading }] = useCreateStockAdjustmentMutation();
   const { data: productData } = useGetProductSelectQuery();
 
   const [selectedProductId, setSelectedProductId] = useState<number | string | undefined>();
   const [transactionType, setTransactionType] = useState<'MANUAL_ADJUSTMENT' | 'DAMAGED'>('MANUAL_ADJUSTMENT');
+
+  useEffect(() => {
+    if (selectedBranchId) {
+      form.setFieldValue('branch_id', selectedBranchId);
+    }
+    if (selectedWarehouseId) {
+      form.setFieldValue('warehouse_id', selectedWarehouseId);
+    }
+  }, [selectedBranchId, selectedWarehouseId, form]);
 
   const selectedProduct = productData?.data?.find(
     (p) => String(p.id) === String(selectedProductId)
@@ -44,7 +56,8 @@ const CreateStockAdjustModal = () => {
     }
 
     const payload = sanitizeObjectValue({
-      warehouse_id: Number(values.warehouse_id),
+      branch_id: isBranch && selectedBranchId ? selectedBranchId : values.branch_id ? Number(values.branch_id) : undefined,
+      warehouse_id: isWarehouse && selectedWarehouseId ? selectedWarehouseId : values.warehouse_id ? Number(values.warehouse_id) : undefined,
       product_id: Number(values.product_id),
       variant_id: values.variant_id ? Number(values.variant_id) : undefined,
       transaction_type: values.transaction_type,
@@ -84,13 +97,25 @@ const CreateStockAdjustModal = () => {
         }}
       >
         <Row gutter={[12, 12]}>
-          <SelectWarehouse
-            name='warehouse_id'
-            label='Target Warehouse'
-            placeholder='Select warehouse'
-            required
-            lg={12}
-          />
+          {!isBranch && (
+            <SelectBranch
+              name='branch_id'
+              label='Branch'
+              placeholder='Select branch (optional)'
+              required={false}
+              lg={12}
+            />
+          )}
+
+          {!isWarehouse && (
+            <SelectWarehouse
+              name='warehouse_id'
+              label='Target Warehouse'
+              placeholder='Select warehouse'
+              required={false}
+              lg={12}
+            />
+          )}
 
           <SelectProduct
             name='product_id'
@@ -138,19 +163,17 @@ const CreateStockAdjustModal = () => {
 
           <FormInputTextArea
             name='notes'
-            label='Adjustment Reason / Audit Notes'
-            placeholder='Discrepancy reason, physical inventory count variance, damaged unit details...'
+            label='Adjustment Reason / Notes'
+            placeholder='Enter reference note or reason for adjustment'
             required={false}
             lg={24}
-            rows={3}
           />
-        </Row>
 
-        <FromSubmit text='Save Stock Adjustment' loading={isLoading} />
+          <FromSubmit text='Save Adjustment' loading={isLoading} />
+        </Row>
       </Form>
     </Card>
   );
 };
 
 export default CreateStockAdjustModal;
-

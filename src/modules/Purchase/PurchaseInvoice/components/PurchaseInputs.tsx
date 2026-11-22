@@ -5,11 +5,12 @@ import {
   Col,
   Form,
   Row,
+  Select,
   Typography,
   type FormInstance,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import FromSubmit from '../../../../common/Button/FromSubmit';
 import {
   FormInputDate,
@@ -28,6 +29,7 @@ import {
   useGetProductSelectQuery,
   type IProductSelect,
 } from '../../../../common/SelectWithApi';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import type { ICreatePurchase } from '../types/purchaseTypes';
 
 type Props = {
@@ -38,10 +40,26 @@ type Props = {
 };
 
 const PurchaseInputs = ({ onFinish, loading, form, editMode }: Props) => {
+  const { isBranch, isWarehouse } = useActiveLocation();
   const items = Form.useWatch('items', form) || [];
   const discountAmount = Number(Form.useWatch('discount_amount', form) || 0);
   const shippingCost = Number(Form.useWatch('shipping_cost', form) || 0);
   const paidAmount = Number(Form.useWatch('paid_amount', form) || 0);
+
+  const watchedBranchId = Form.useWatch('branch_id', form);
+  const watchedWarehouseId = Form.useWatch('warehouse_id', form);
+  const [destinationType, setDestinationType] = useState<'WAREHOUSE' | 'BRANCH'>(() => {
+    if (isBranch) return 'BRANCH';
+    return 'WAREHOUSE';
+  });
+
+  useEffect(() => {
+    if (watchedBranchId && !watchedWarehouseId && destinationType !== 'BRANCH') {
+      setDestinationType('BRANCH');
+    } else if (watchedWarehouseId && !watchedBranchId && destinationType !== 'WAREHOUSE') {
+      setDestinationType('WAREHOUSE');
+    }
+  }, [watchedBranchId, watchedWarehouseId, destinationType]);
 
   const { data: productSelectRes } = useGetProductSelectQuery();
   const products = useMemo(
@@ -183,18 +201,45 @@ const PurchaseInputs = ({ onFinish, loading, form, editMode }: Props) => {
           md={12}
           lg={6}
         />
-        <SelectBranch
-          name='branch_id'
-          label='Operating Branch'
-          md={12}
-          lg={6}
-        />
-        <SelectWarehouse
-          name='warehouse_id'
-          label='Destination Warehouse'
-          md={12}
-          lg={6}
-        />
+        {!isBranch && !isWarehouse && (
+          <Col xs={24} sm={12} md={12} lg={6}>
+            <Form.Item label='Receive Destination' style={{ marginBottom: 16 }}>
+              <Select
+                value={destinationType}
+                onChange={(val: 'WAREHOUSE' | 'BRANCH') => {
+                  setDestinationType(val);
+                  if (val === 'WAREHOUSE') {
+                    form.setFieldValue('branch_id', undefined);
+                  } else {
+                    form.setFieldValue('warehouse_id', undefined);
+                  }
+                }}
+                options={[
+                  { label: 'Warehouse', value: 'WAREHOUSE' },
+                  { label: 'Branch', value: 'BRANCH' },
+                ]}
+              />
+            </Form.Item>
+          </Col>
+        )}
+        {!isBranch && (!isWarehouse ? destinationType === 'BRANCH' : false) && (
+          <SelectBranch
+            name='branch_id'
+            label='Destination Branch'
+            required
+            md={12}
+            lg={6}
+          />
+        )}
+        {!isWarehouse && (!isBranch ? destinationType === 'WAREHOUSE' : false) && (
+          <SelectWarehouse
+            name='warehouse_id'
+            label='Destination Warehouse'
+            required
+            md={12}
+            lg={6}
+          />
+        )}
         <FormInputDate
           name='purchase_date'
           label='Purchase Date'

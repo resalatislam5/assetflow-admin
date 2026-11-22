@@ -1,6 +1,7 @@
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Form, InputNumber, Row, Select, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
+import { useEffect } from 'react';
 import { closeModal } from '../../../../app/features/modalSlice';
 import { useAppDispatch } from '../../../../app/hooks/hooks';
 import FromSubmit from '../../../../common/Button/FromSubmit';
@@ -10,6 +11,7 @@ import {
   SelectWarehouse,
   useGetProductSelectQuery,
 } from '../../../../common/SelectWithApi';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import { sanitizeObjectValue } from '../../../../common/utils/sanitizeObjectValue';
 import { useCreateStockTransferMutation } from '../api/stockTransferEndpoints';
 import type { ICreateStockTransferPayload } from '../types/stockTransferTypes';
@@ -33,10 +35,20 @@ interface ITransferFormValues {
 const CreateStockTransferModal = () => {
   const [form] = useForm<ITransferFormValues>();
   const dispatch = useAppDispatch();
+  const { selectedBranchId, selectedWarehouseId } = useActiveLocation();
   const [createTransfer, { isLoading }] = useCreateStockTransferMutation();
   const { data: productData } = useGetProductSelectQuery();
 
   const products = productData?.data || [];
+
+  useEffect(() => {
+    if (selectedBranchId) {
+      form.setFieldValue('from_branch_id', selectedBranchId);
+    }
+    if (selectedWarehouseId) {
+      form.setFieldValue('from_warehouse_id', selectedWarehouseId);
+    }
+  }, [selectedBranchId, selectedWarehouseId, form]);
 
   const onFinish = async (values: ITransferFormValues) => {
     const payload = sanitizeObjectValue({

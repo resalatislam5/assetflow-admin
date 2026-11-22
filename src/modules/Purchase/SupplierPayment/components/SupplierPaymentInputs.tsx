@@ -12,6 +12,7 @@ import {
   SelectBranch,
   SelectSupplier,
 } from '../../../../common/SelectWithApi';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import FromSubmit from '../../../../common/Button/FromSubmit';
 import type { ICreateSupplierPayment } from '../types/supplierPaymentTypes';
 
@@ -28,6 +29,7 @@ const SupplierPaymentInputs = ({
   form,
   initialSupplierId,
 }: Props) => {
+  const { isBranch } = useActiveLocation();
   return (
     <Form<ICreateSupplierPayment>
       form={form}
@@ -46,11 +48,13 @@ const SupplierPaymentInputs = ({
           required
           md={12}
         />
-        <SelectBranch
-          name='branch_id'
-          label='Branch'
-          md={12}
-        />
+        {!isBranch && (
+          <SelectBranch
+            name='branch_id'
+            label='Branch'
+            md={12}
+          />
+        )}
         <SelectAccount
           name='account_id'
           label='Disbursement Account'

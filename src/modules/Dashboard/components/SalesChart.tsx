@@ -18,21 +18,24 @@ interface Props {
   loading?: boolean;
 }
 
-const defaultSalesData: ISalesTrend[] = [
-  { month: 'Jan', sales: 185000, orders: 420 },
-  { month: 'Feb', sales: 220000, orders: 510 },
-  { month: 'Mar', sales: 210000, orders: 490 },
-  { month: 'Apr', sales: 260000, orders: 610 },
-  { month: 'May', sales: 295000, orders: 700 },
-  { month: 'Jun', sales: 310000, orders: 740 },
-  { month: 'Jul', sales: 280000, orders: 660 },
-  { month: 'Aug', sales: 330000, orders: 810 },
-  { month: 'Sep', sales: 345000, orders: 840 },
-  { month: 'Oct', sales: 385450, orders: 920 },
+const defaultMonths: ISalesTrend[] = [
+  { month: 'Jan', sales: 0, orders: 0 },
+  { month: 'Feb', sales: 0, orders: 0 },
+  { month: 'Mar', sales: 0, orders: 0 },
+  { month: 'Apr', sales: 0, orders: 0 },
+  { month: 'May', sales: 0, orders: 0 },
+  { month: 'Jun', sales: 0, orders: 0 },
+  { month: 'Jul', sales: 0, orders: 0 },
+  { month: 'Aug', sales: 0, orders: 0 },
+  { month: 'Sep', sales: 0, orders: 0 },
+  { month: 'Oct', sales: 0, orders: 0 },
+  { month: 'Nov', sales: 0, orders: 0 },
+  { month: 'Dec', sales: 0, orders: 0 },
 ];
 
-const SalesChart: React.FC<Props> = ({ data = defaultSalesData, loading }) => {
+const SalesChart: React.FC<Props> = ({ data, loading }) => {
   const [metric, setMetric] = useState<'sales' | 'orders'>('sales');
+  const chartData = data && data.length > 0 ? data : defaultMonths;
 
   return (
     <Card
@@ -65,7 +68,7 @@ const SalesChart: React.FC<Props> = ({ data = defaultSalesData, loading }) => {
     >
       <div style={{ width: '100%', height: 320 }}>
         <ResponsiveContainer width='100%' height='100%'>
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id='salesGradient' x1='0' y1='0' x2='0' y2='1'>
                 <stop offset='5%' stopColor='#10B981' stopOpacity={0.35} />
@@ -87,7 +90,7 @@ const SalesChart: React.FC<Props> = ({ data = defaultSalesData, loading }) => {
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#94A3B8', fontSize: 12 }}
-              tickFormatter={(v) =>
+              tickFormatter={(v: number) =>
                 metric === 'sales'
                   ? `৳${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`
                   : v.toString()

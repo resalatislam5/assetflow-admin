@@ -10,6 +10,7 @@ import {
 } from '../../../common/Form/FormIInput';
 import FromSubmit from '../../../common/Button/FromSubmit';
 import { SelectBranch } from '../../../common/SelectWithApi/Select';
+import { useActiveLocation } from '../../../common/hooks/useActiveLocation';
 import type { ICreateCustomer } from '../types/customerTypes';
 
 type Props = {
@@ -20,10 +21,21 @@ type Props = {
 };
 
 const CustomerInputs = ({ onFinish, loading, form, editMode }: Props) => {
+  const { isBranch } = useActiveLocation();
+  const customerType = Form.useWatch('customer_type', form);
+  const showCompanyName = customerType === 'WHOLESALE' || customerType === 'CORPORATE';
+
+  const handleValuesChange = (changedValues: Partial<ICreateCustomer>) => {
+    if (changedValues.customer_type === 'RETAIL' || changedValues.customer_type === 'WALK_IN') {
+      form.setFieldsValue({ company_name: undefined });
+    }
+  };
+
   return (
     <Form<ICreateCustomer>
       form={form}
       onFinish={onFinish}
+      onValuesChange={handleValuesChange}
       layout='vertical'
       initialValues={{
         status: 'ACTIVE',
@@ -44,14 +56,16 @@ const CustomerInputs = ({ onFinish, loading, form, editMode }: Props) => {
             lg={8}
           />
         )}
-        <SelectBranch
-          name='branch_id'
-          label='Branch'
-          placeholder='Select branch (Optional)'
-          allowClear
-          md={12}
-          lg={8}
-        />
+        {!isBranch && (
+          <SelectBranch
+            name='branch_id'
+            label='Branch'
+            placeholder='Select branch (Optional)'
+            allowClear
+            md={12}
+            lg={8}
+          />
+        )}
         <FormInputSelect
           name='customer_type'
           label='Customer Type'
@@ -65,13 +79,15 @@ const CustomerInputs = ({ onFinish, loading, form, editMode }: Props) => {
             { label: 'Walk-In', value: 'WALK_IN' },
           ]}
         />
-        <FormInputText
-          name='company_name'
-          label='Company Name'
-          placeholder='Enter company or business name'
-          md={12}
-          lg={8}
-        />
+        {showCompanyName && (
+          <FormInputText
+            name='company_name'
+            label='Company Name'
+            placeholder='Enter company or business name'
+            md={12}
+            lg={8}
+          />
+        )}
         <FormInputText
           name='first_name'
           label='First Name'

@@ -8,6 +8,7 @@ import { sanitizeFormData } from '../../../common/utils/sanitizeFormData';
 import { toUploadFileList } from '../../../common/utils/toUploadFileList ';
 import { useAppDispatch } from '../../../app/hooks/hooks';
 import { closeModal } from '../../../app/features/modalSlice';
+import { useActiveLocation } from '../../../common/hooks/useActiveLocation';
 import CustomerInputs from './CustomerInputs';
 import type { ICreateCustomer } from '../types/customerTypes';
 
@@ -18,6 +19,7 @@ type Props = {
 const UpdateCustomer = ({ id }: Props) => {
   const [form] = Form.useForm<ICreateCustomer>();
   const dispatch = useAppDispatch();
+  const { isBranch, selectedBranchId } = useActiveLocation();
   const { data, isLoading: isFetching } = useGetSingleCustomerQuery(id);
   const [updateCustomer, { isLoading }] = useUpdateCustomerMutation();
 
@@ -44,7 +46,14 @@ const UpdateCustomer = ({ id }: Props) => {
   }, [data, form]);
 
   const onFinish = (values: ICreateCustomer) => {
-    const formData = sanitizeFormData(values, { fileKeys: ['upload_avatar'] });
+    const payload: ICreateCustomer = {
+      ...values,
+      branch_id: isBranch && selectedBranchId ? selectedBranchId : values.branch_id,
+    };
+    const formData = sanitizeFormData(payload, {
+      fileKeys: ['upload_avatar'],
+      ignoreKeys: ['customer_code'],
+    });
 
     updateCustomer({ body: formData, id })
       .unwrap()

@@ -1,4 +1,4 @@
-﻿import {
+import {
   Button,
   Card,
   Col,
@@ -29,6 +29,7 @@ import {
   SelectCustomer,
   SelectWarehouse,
 } from '../../../../common/SelectWithApi';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import { useGetProductSelectQuery } from '../../../../common/SelectWithApi/SelectEndpoints';
 import { useGetSingleCustomerQuery } from '../../../Customer/api/customerEndpoints';
 
@@ -52,6 +53,7 @@ const PAYMENT_METHOD_OPTIONS = [
 ];
 
 const InvoiceInputs = ({ onFinish, form, loading, editMode }: Props) => {
+  const { isBranch, isWarehouse } = useActiveLocation();
   const { data: productData, isLoading: isProductsLoading } =
     useGetProductSelectQuery();
 
@@ -187,20 +189,24 @@ const InvoiceInputs = ({ onFinish, form, loading, editMode }: Props) => {
             disabled={editMode}
             lg={6}
           />
-          <SelectBranch
-            name='branch_id'
-            label='Branch'
-            placeholder='Select branch'
-            allowClear
-            lg={6}
-          />
-          <SelectWarehouse
-            name='warehouse_id'
-            label='Fulfillment Warehouse'
-            placeholder='Auto-assign or select warehouse'
-            allowClear
-            lg={6}
-          />
+          {!isBranch && (
+            <SelectBranch
+              name='branch_id'
+              label='Branch'
+              placeholder='Select branch'
+              allowClear
+              lg={6}
+            />
+          )}
+          {!isWarehouse && (
+            <SelectWarehouse
+              name='warehouse_id'
+              label='Fulfillment Warehouse'
+              placeholder='Auto-assign or select warehouse'
+              allowClear
+              lg={6}
+            />
+          )}
           <FormInputSelect
             name='payment_method'
             label='Payment Method'

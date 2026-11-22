@@ -46,7 +46,22 @@ export interface ICustomer {
   updated_at: string;
 }
 
-export type ICustomerList = ICustomer;
+export interface ICustomerList {
+  id: number;
+  avatar?: string;
+  customer_code: string;
+  customer_type: 'RETAIL' | 'WHOLESALE' | 'CORPORATE' | 'WALK_IN';
+  first_name: string;
+  last_name?: string;
+  company_name?: string;
+  branch_name?: string;
+  phone: string;
+  email?: string;
+  current_balance: number;
+  status: 'ACTIVE' | 'INACTIVE' | 'BANNED';
+  created_at: string;
+}
+
 export type IViewCustomer = ICustomer;
 
 export interface ICustomerQuery {

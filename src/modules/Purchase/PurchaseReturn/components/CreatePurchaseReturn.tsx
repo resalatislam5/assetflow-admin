@@ -1,18 +1,32 @@
 import { Card, Form } from 'antd';
 import dayjs from 'dayjs';
+import { useEffect } from 'react';
 import { useCreatePurchaseReturnMutation } from '../api/purchaseReturnEndpoints';
 import { sanitizeObjectValue } from '../../../../common/utils/sanitizeObjectValue';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import PurchaseReturnInputs from './PurchaseReturnInputs';
 import type { ICreatePurchaseReturn } from '../types/purchaseReturnTypes';
 
 const CreatePurchaseReturn = () => {
   const [form] = Form.useForm<ICreatePurchaseReturn>();
+  const { isBranch, selectedBranchId, isWarehouse, selectedWarehouseId } = useActiveLocation();
   const [createPurchaseReturn, { isLoading }] =
     useCreatePurchaseReturnMutation();
+
+  useEffect(() => {
+    if (selectedBranchId) {
+      form.setFieldValue('branch_id', selectedBranchId);
+    }
+    if (selectedWarehouseId) {
+      form.setFieldValue('warehouse_id', selectedWarehouseId);
+    }
+  }, [selectedBranchId, selectedWarehouseId, form]);
 
   const onFinish = (values: ICreatePurchaseReturn) => {
     const formattedValues: ICreatePurchaseReturn = {
       ...values,
+      branch_id: isBranch && selectedBranchId ? selectedBranchId : values.branch_id ? Number(values.branch_id) : undefined,
+      warehouse_id: isWarehouse && selectedWarehouseId ? selectedWarehouseId : values.warehouse_id ? Number(values.warehouse_id) : undefined,
       return_date: values.return_date
         ? dayjs(values.return_date).toISOString()
         : undefined,

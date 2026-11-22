@@ -77,12 +77,6 @@ const CreateProduct = () => {
         (values.pos_display_order as unknown as string) !== ''
           ? Number(values.pos_display_order)
           : 0,
-      weight_grams:
-        values.weight_grams !== undefined &&
-        values.weight_grams !== null &&
-        (values.weight_grams as unknown as string) !== ''
-          ? Number(values.weight_grams)
-          : undefined,
       has_variants: Boolean(values.has_variants),
       variants:
         values.has_variants && values.variants?.length

@@ -14,15 +14,18 @@ export interface ISupplierList {
   company_name?: string;
   phone?: string;
   email?: string;
-  address?: string;
   opening_balance: number;
   current_balance: number;
   status: 'ACTIVE' | 'INACTIVE';
   created_at: string;
-  updated_at: string;
 }
 
-export interface IViewSupplier extends ISupplierList {}
+export interface IViewSupplier extends ISupplierList {
+  address?: string;
+  updated_at?: string;
+  total_purchases?: number;
+  total_paid?: number;
+}
 
 export type ISupplierQuery = Partial<{
   limit: number;

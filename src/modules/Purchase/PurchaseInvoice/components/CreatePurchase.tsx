@@ -1,17 +1,31 @@
 import { Card, Form } from 'antd';
 import dayjs from 'dayjs';
+import { useEffect } from 'react';
 import { useCreatePurchaseMutation } from '../api/purchaseEndpoints';
 import { sanitizeObjectValue } from '../../../../common/utils/sanitizeObjectValue';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import PurchaseInputs from './PurchaseInputs';
 import type { ICreatePurchase } from '../types/purchaseTypes';
 
 const CreatePurchase = () => {
   const [form] = Form.useForm<ICreatePurchase>();
+  const { isBranch, selectedBranchId, isWarehouse, selectedWarehouseId } = useActiveLocation();
   const [createPurchase, { isLoading }] = useCreatePurchaseMutation();
+
+  useEffect(() => {
+    if (selectedBranchId) {
+      form.setFieldValue('branch_id', selectedBranchId);
+    }
+    if (selectedWarehouseId) {
+      form.setFieldValue('warehouse_id', selectedWarehouseId);
+    }
+  }, [selectedBranchId, selectedWarehouseId, form]);
 
   const onFinish = (values: ICreatePurchase) => {
     const formattedValues: ICreatePurchase = {
       ...values,
+      branch_id: isBranch && selectedBranchId ? selectedBranchId : values.branch_id ? Number(values.branch_id) : undefined,
+      warehouse_id: isWarehouse && selectedWarehouseId ? selectedWarehouseId : values.warehouse_id ? Number(values.warehouse_id) : undefined,
       purchase_date: values.purchase_date
         ? dayjs(values.purchase_date).toISOString()
         : undefined,

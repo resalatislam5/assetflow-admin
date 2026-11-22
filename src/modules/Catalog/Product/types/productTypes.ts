@@ -54,12 +54,9 @@ export interface ICreateProduct {
   has_warranty?: boolean;
   warranty_days?: number;
   has_variants?: boolean;
-  weight_grams?: number;
   status?: 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
-  is_featured?: boolean;
   is_pos_favorite?: boolean;
   pos_display_order?: number;
-  tags?: string[];
   upload_thumbnail?: UploadFile[];
   upload_images?: UploadFile[];
   images?: IProductImage[];
@@ -97,12 +94,11 @@ export interface IProductList {
   warranty_days?: number;
   has_variants?: boolean;
   variants_count?: number;
-  weight_grams?: number;
   status: 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
-  is_featured?: boolean;
   is_pos_favorite?: boolean;
   pos_display_order?: number;
   primary_image?: string;
+  stock_quantity?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -110,7 +106,6 @@ export interface IProductList {
 export interface IViewProduct extends IProductList {
   short_description?: string;
   description?: string;
-  tags?: string[];
   images?: IProductImage[];
   variants?: IProductVariant[];
 }
@@ -124,6 +119,5 @@ export type IProductQuery = Partial<{
   tracking_type: 'NONE' | 'SERIAL' | 'BATCH';
   category_id: string | number;
   brand_id: string | number;
-  is_featured: boolean;
   is_pos_favorite: boolean;
 }>;

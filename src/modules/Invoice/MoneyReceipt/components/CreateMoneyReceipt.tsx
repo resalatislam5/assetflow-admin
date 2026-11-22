@@ -22,6 +22,7 @@ import {
 import { SelectAccount, SelectBranch, SelectOrder } from '../../../../common/SelectWithApi';
 import type { IOrderSelect } from '../../../../common/SelectWithApi';
 import { sanitizeFormData } from '../../../../common/utils/sanitizeFormData';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import { useCreateMoneyReceiptMutation } from '../api/moneyReceiptEndpoints';
 import type {
   ICreateMoneyReceipt,
@@ -53,6 +54,7 @@ const CreateMoneyReceipt = ({ defaultOrderId, defaultDueAmount }: Props) => {
   const { token } = theme.useToken();
   const [form] = Form.useForm<ICreateMoneyReceipt>();
   const dispatch = useAppDispatch();
+  const { isBranch, selectedBranchId } = useActiveLocation();
   const [createReceipt, { isLoading }] = useCreateMoneyReceiptMutation();
 
   const [selectedOrderInfo, setSelectedOrderInfo] = useState<IOrderSelect | undefined>();
@@ -101,7 +103,7 @@ const CreateMoneyReceipt = ({ defaultOrderId, defaultDueAmount }: Props) => {
       ...values,
       order_id: Number(values.order_id),
       invoice_id: Number(values.order_id),
-      branch_id: values.branch_id ? Number(values.branch_id) : undefined,
+      branch_id: isBranch && selectedBranchId ? selectedBranchId : values.branch_id ? Number(values.branch_id) : undefined,
       account_id: Number(values.account_id),
       amount: Number(values.amount),
       charge_type: values.charge_type || 'FIXED',
@@ -145,12 +147,14 @@ const CreateMoneyReceipt = ({ defaultOrderId, defaultDueAmount }: Props) => {
             lg={8}
           />
 
-          <SelectBranch
-            name='branch_id'
-            label='Branch'
-            placeholder='Select branch'
-            lg={8}
-          />
+          {!isBranch && (
+            <SelectBranch
+              name='branch_id'
+              label='Branch'
+              placeholder='Select branch'
+              lg={8}
+            />
+          )}
 
           <FormInputSelect
             name='payment_type'

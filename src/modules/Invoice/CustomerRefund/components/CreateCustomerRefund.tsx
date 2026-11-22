@@ -30,6 +30,7 @@ import {
 } from '../../../../common/SelectWithApi';
 import type { IOrderSelect } from '../../../../common/SelectWithApi';
 import { sanitizeFormData } from '../../../../common/utils/sanitizeFormData';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import { useCreateCustomerRefundMutation } from '../api/customerRefundEndpoints';
 import type {
   CustomerRefundChargeType,
@@ -81,6 +82,7 @@ const CreateCustomerRefund = ({
   const { token } = theme.useToken();
   const [form] = Form.useForm<ICreateCustomerRefund>();
   const dispatch = useAppDispatch();
+  const { isBranch, selectedBranchId } = useActiveLocation();
   const [createRefund, { isLoading }] = useCreateCustomerRefundMutation();
 
   const [selectedOrderInfo, setSelectedOrderInfo] = useState<IOrderSelect | undefined>();
@@ -157,7 +159,7 @@ const CreateCustomerRefund = ({
     const rawPayload: Record<string, unknown> = {
       ...values,
       customer_id: Number(values.customer_id),
-      branch_id: values.branch_id ? Number(values.branch_id) : undefined,
+      branch_id: isBranch && selectedBranchId ? selectedBranchId : values.branch_id ? Number(values.branch_id) : undefined,
       order_id: values.order_id ? Number(values.order_id) : undefined,
       invoice_id: values.order_id ? Number(values.order_id) : undefined,
       return_id: values.return_id ? Number(values.return_id) : undefined,
@@ -204,7 +206,9 @@ const CreateCustomerRefund = ({
         <Row gutter={[16, 0]}>
           <SelectCustomer name='customer_id' label='Customer' required lg={8} />
 
-          <SelectBranch name='branch_id' label='Branch' placeholder='Select branch' lg={8} />
+          {!isBranch && (
+            <SelectBranch name='branch_id' label='Branch' placeholder='Select branch' lg={8} />
+          )}
 
           <SelectOrder
             name='order_id'

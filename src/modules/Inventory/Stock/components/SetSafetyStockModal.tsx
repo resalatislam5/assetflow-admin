@@ -14,6 +14,7 @@ import {
   SelectWarehouse,
   useGetProductSelectQuery,
 } from '../../../../common/SelectWithApi';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import { useSetSafetyStockMutation } from '../api/stockEndpoints';
 import type { ISetSafetyStockPayload, IStock } from '../types/stockTypes';
 
@@ -24,6 +25,7 @@ type Props = {
 const SetSafetyStockModal = ({ record }: Props) => {
   const [form] = useForm<ISetSafetyStockPayload>();
   const dispatch = useAppDispatch();
+  const { isWarehouse, selectedWarehouseId } = useActiveLocation();
   const [setSafetyStock, { isLoading }] = useSetSafetyStockMutation();
   const { data: productData } = useGetProductSelectQuery();
 
@@ -45,7 +47,7 @@ const SetSafetyStockModal = ({ record }: Props) => {
     const body = sanitizeObjectValue({
       ...values,
       stock_id: record?.id,
-      warehouse_id: record ? record.warehouse_id : values.warehouse_id,
+      warehouse_id: record ? record.warehouse_id : isWarehouse && selectedWarehouseId ? selectedWarehouseId : values.warehouse_id,
       product_id: record ? record.product_id : values.product_id,
       variant_id: record?.variant_id ?? values.variant_id ?? undefined,
       safety_stock: Number(values.safety_stock),
@@ -68,8 +70,12 @@ const SetSafetyStockModal = ({ record }: Props) => {
         variant_id: record.variant_id,
         safety_stock: record.safety_stock,
       });
+    } else {
+      if (selectedWarehouseId) {
+        form.setFieldValue('warehouse_id', selectedWarehouseId);
+      }
     }
-  }, [form, record]);
+  }, [form, record, selectedWarehouseId]);
 
   return (
     <Card size='small' className='modal-container'>
@@ -103,13 +109,15 @@ const SetSafetyStockModal = ({ record }: Props) => {
         <Row gutter={[12, 12]}>
           {!record && (
             <>
-              <SelectWarehouse
-                name='warehouse_id'
-                label='Warehouse'
-                placeholder='Select warehouse'
-                required
-                lg={12}
-              />
+              {!isWarehouse && (
+                <SelectWarehouse
+                  name='warehouse_id'
+                  label='Warehouse'
+                  placeholder='Select warehouse'
+                  required
+                  lg={12}
+                />
+              )}
 
               <SelectProduct
                 name='product_id'

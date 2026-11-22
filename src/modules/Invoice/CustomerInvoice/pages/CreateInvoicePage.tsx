@@ -1,18 +1,30 @@
-﻿import { Form } from 'antd';
+import { Form } from 'antd';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import SingleContainer from '../../../../layout/components/SingleContainer';
 import InvoiceInputs from '../components/InvoiceInputs';
 import { useCreateOrderMutation } from '../api/invoiceEndpoints';
 import { useGetProductSelectQuery } from '../../../../common/SelectWithApi/SelectEndpoints';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import type { ICreateOrder } from '../types/invoiceTypes';
 
 const CreateOrderPage = () => {
   const [form] = Form.useForm<ICreateOrder>();
   const navigate = useNavigate();
+  const { isBranch, selectedBranchId, isWarehouse, selectedWarehouseId } = useActiveLocation();
   const [createOrder, { isLoading }] = useCreateOrderMutation();
   const { data: productData } = useGetProductSelectQuery();
 
   const products = productData?.data || [];
+
+  useEffect(() => {
+    if (selectedBranchId) {
+      form.setFieldValue('branch_id', selectedBranchId);
+    }
+    if (selectedWarehouseId) {
+      form.setFieldValue('warehouse_id', selectedWarehouseId);
+    }
+  }, [selectedBranchId, selectedWarehouseId, form]);
 
   const onFinish = (values: ICreateOrder) => {
     const addressSnapshot = {
@@ -44,11 +56,13 @@ const CreateOrderPage = () => {
       };
     });
 
+    const resolvedBranchId = isBranch && selectedBranchId ? selectedBranchId : values.branch_id ? Number(values.branch_id) : undefined;
+    const resolvedWarehouseId = isWarehouse && selectedWarehouseId ? selectedWarehouseId : values.warehouse_id ? Number(values.warehouse_id) : undefined;
+
     const payload: ICreateOrder = {
       customer_id: Number(values.customer_id),
-      warehouse_id: values.warehouse_id
-        ? Number(values.warehouse_id)
-        : undefined,
+      branch_id: resolvedBranchId,
+      warehouse_id: resolvedWarehouseId,
       recipient_name: values.recipient_name,
       recipient_phone: values.recipient_phone,
       division_id: values.division_id ? Number(values.division_id) : undefined,

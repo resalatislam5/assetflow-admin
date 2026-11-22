@@ -62,7 +62,7 @@ const NavbarLocationSelector = () => {
       );
     }
 
-    dispatch(api.util.invalidateTags(['STOCK', 'INVENTORY', 'PRODUCT', 'ORDER', 'PURCHASE', 'ACCOUNT', 'EXPENSE']));
+    dispatch(api.util.invalidateTags(['STOCK', 'INVENTORY', 'PRODUCT', 'ORDER', 'PURCHASE', 'ACCOUNT', 'EXPENSE', 'CUSTOMER']));
   };
 
   if (!isSuperAdminOrAll) {

@@ -11,10 +11,12 @@ import {
 } from '../../../../common/Form/FormIInput';
 import { sanitizeObjectValue } from '../../../../common/utils/sanitizeObjectValue';
 import {
+  SelectBranch,
   SelectProduct,
   SelectWarehouse,
   useGetProductSelectQuery,
 } from '../../../../common/SelectWithApi';
+import { useActiveLocation } from '../../../../common/hooks/useActiveLocation';
 import { useAdjustStockMutation } from '../api/stockEndpoints';
 import type { IAdjustStockPayload, IStock, TransactionType } from '../types/stockTypes';
 
@@ -25,6 +27,7 @@ type Props = {
 const AdjustStockModal = ({ record }: Props) => {
   const [form] = useForm<IAdjustStockPayload>();
   const dispatch = useAppDispatch();
+  const { isBranch, selectedBranchId, isWarehouse, selectedWarehouseId } = useActiveLocation();
   const [adjustStock, { isLoading }] = useAdjustStockMutation();
   const { data: productData } = useGetProductSelectQuery();
 
@@ -46,12 +49,19 @@ const AdjustStockModal = ({ record }: Props) => {
     })) || [];
 
   const onFinish = async (values: IAdjustStockPayload) => {
+    let quantityChange = Number(values.quantity_change);
+    if ((currentTransactionType === 'DAMAGED' || currentTransactionType === 'EXPIRED') && quantityChange > 0) {
+      quantityChange = -Math.abs(quantityChange);
+    }
+
     const body = sanitizeObjectValue({
       ...values,
       stock_id: record?.id,
-      warehouse_id: record ? record.warehouse_id : values.warehouse_id,
-      product_id: record ? record.product_id : values.product_id,
-      variant_id: record?.variant_id ?? values.variant_id ?? undefined,
+      branch_id: record ? record.branch_id : isBranch && selectedBranchId ? selectedBranchId : values.branch_id ? Number(values.branch_id) : undefined,
+      warehouse_id: record ? record.warehouse_id : isWarehouse && selectedWarehouseId ? selectedWarehouseId : values.warehouse_id ? Number(values.warehouse_id) : undefined,
+      product_id: record ? record.product_id : Number(values.product_id),
+      variant_id: record?.variant_id ?? (values.variant_id ? Number(values.variant_id) : undefined),
+      quantity_change: quantityChange,
     }) as IAdjustStockPayload;
 
     const res = await adjustStock(body);
@@ -66,18 +76,29 @@ const AdjustStockModal = ({ record }: Props) => {
       setSelectedProductId(record.product_id);
       form.setFieldsValue({
         stock_id: record.id,
+        branch_id: record.branch_id,
         warehouse_id: record.warehouse_id,
         product_id: record.product_id,
         variant_id: record.variant_id,
         safety_stock: record.safety_stock,
         transaction_type: 'MANUAL_ADJUSTMENT',
       });
+    } else {
+      if (selectedBranchId) {
+        form.setFieldValue('branch_id', selectedBranchId);
+      }
+      if (selectedWarehouseId) {
+        form.setFieldValue('warehouse_id', selectedWarehouseId);
+      }
     }
-  }, [form, record]);
+  }, [form, record, selectedBranchId, selectedWarehouseId]);
 
   const getQuantityLabel = () => {
     if (currentTransactionType === 'DAMAGED') {
       return 'Damaged Quantity to Deduct';
+    }
+    if (currentTransactionType === 'EXPIRED') {
+      return 'Expired Quantity to Deduct';
     }
     return 'Quantity Change (+ to add, - to deduct)';
   };
@@ -85,6 +106,9 @@ const AdjustStockModal = ({ record }: Props) => {
   const getQuantityPlaceholder = () => {
     if (currentTransactionType === 'DAMAGED') {
       return 'Enter units damaged / write off';
+    }
+    if (currentTransactionType === 'EXPIRED') {
+      return 'Enter units expired / write off';
     }
     return 'e.g. 50 (to add) or -10 (to deduct)';
   };
@@ -100,6 +124,11 @@ const AdjustStockModal = ({ record }: Props) => {
             <div>
               <strong>Product:</strong> {record.product_title} &nbsp;|&nbsp;{' '}
               <strong>SKU:</strong> <code>{record.product_sku}</code> &nbsp;|&nbsp;{' '}
+              {record.branch_name && (
+                <>
+                  <strong>Branch:</strong> {record.branch_name} &nbsp;|&nbsp;{' '}
+                </>
+              )}
               <strong>Warehouse:</strong> {record.warehouse_name} &nbsp;|&nbsp;{' '}
               <strong>On Hand:</strong>{' '}
               <span style={{ color: '#1677ff', fontWeight: 600 }}>
@@ -124,13 +153,25 @@ const AdjustStockModal = ({ record }: Props) => {
         <Row gutter={[12, 12]}>
           {!record && (
             <>
-              <SelectWarehouse
-                name='warehouse_id'
-                label='Target Warehouse'
-                placeholder='Select warehouse'
-                required
-                lg={12}
-              />
+              {!isBranch && (
+                <SelectBranch
+                  name='branch_id'
+                  label='Branch'
+                  placeholder='Select branch (optional)'
+                  required={false}
+                  lg={12}
+                />
+              )}
+
+              {!isWarehouse && (
+                <SelectWarehouse
+                  name='warehouse_id'
+                  label='Target Warehouse'
+                  placeholder='Select warehouse'
+                  required={false}
+                  lg={12}
+                />
+              )}
 
               <SelectProduct
                 name='product_id'
@@ -167,6 +208,7 @@ const AdjustStockModal = ({ record }: Props) => {
             options={[
               { label: 'Manual Adjustment (+ or -)', value: 'MANUAL_ADJUSTMENT' },
               { label: 'Damaged / Write Off (-)', value: 'DAMAGED' },
+              { label: 'Expired / Write Off (-)', value: 'EXPIRED' },
             ]}
           />
 

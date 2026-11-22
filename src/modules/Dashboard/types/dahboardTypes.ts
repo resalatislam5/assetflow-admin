@@ -15,6 +15,17 @@ export interface IEcommerceSummary {
     count: number;
     new_this_month: number;
   };
+  total_purchases?: {
+    amount: number;
+    count: number;
+  };
+  total_expenses?: {
+    amount: number;
+  };
+  total_due?: {
+    amount: number;
+  };
+  low_stock_count?: number;
 }
 
 export interface ISalesTrend {
@@ -30,7 +41,8 @@ export interface IRecentOrder {
   customer_phone: string;
   total_amount: number;
   payment_method: string;
-  status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  status: 'COMPLETED' | 'PENDING' | 'CANCELLED' | 'RETURNED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED';
+  branch_name?: string;
   created_at: string;
 }
 
@@ -50,10 +62,30 @@ export interface IOrderStatusDistribution {
   color: string;
 }
 
+export interface ILowStockAlert {
+  id: string;
+  product_name: string;
+  sku: string;
+  category_name: string;
+  branch_name: string;
+  warehouse_name: string;
+  quantity_on_hand: number;
+  safety_stock: number;
+}
+
+export interface ILocationContext {
+  scope: 'ALL' | 'BRANCH' | 'WAREHOUSE';
+  branch_id: number | null;
+  warehouse_id: number | null;
+  location_name: string;
+}
+
 export interface IEcommerceDashboardData {
   summary: IEcommerceSummary;
   sales_trend: ISalesTrend[];
   recent_orders: IRecentOrder[];
   top_products: ITopProduct[];
   order_status_distribution: IOrderStatusDistribution[];
+  low_stock_items?: ILowStockAlert[];
+  location_context?: ILocationContext;
 }

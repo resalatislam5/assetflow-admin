@@ -128,12 +128,7 @@ const POSPaymentModal = ({
         message.success('Payment completed successfully');
         onSuccess(res.data);
       }
-    } catch (err: unknown) {
-      const errorMsg =
-        typeof err === 'object' && err !== null && 'data' in err
-          ? (err as { data?: { message?: string } }).data?.message || 'Checkout failed'
-          : 'Checkout failed';
-      message.error(errorMsg);
+    } catch {
     }
   };
 

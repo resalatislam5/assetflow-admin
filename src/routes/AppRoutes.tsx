@@ -75,7 +75,6 @@ import TrialBalanceReport from '../modules/Report/TrialBalance/pages/TrialBalanc
 import IncomeStatementReport from '../modules/Report/IncomeStatement/pages/IncomeStatementReport';
 import BalanceSheetReport from '../modules/Report/BalanceSheet/pages/BalanceSheetReport';
 import CustomerLedgerReport from '../modules/Report/CustomerLedger/pages/CustomerLedgerReport';
-import SupportTicketList from '../modules/Support/SupportTicket/pages/SupportTicketList';
 import PaymentList from '../modules/Payment/pages/PaymentList';
 import RefundList from '../modules/Payment/pages/RefundList';
 
@@ -655,12 +654,6 @@ export const AppRoutes: IAppRoutes[] = [
     path: '/report/customer-ledger',
     element: <CustomerLedgerReport />,
     name: 'CUSTOMER_LEDGER_REPORT',
-    isGuarded: true,
-  },
-  {
-    path: '/support/tickets',
-    element: <SupportTicketList />,
-    name: 'SUPPORT_TICKET',
     isGuarded: true,
   },
 ];

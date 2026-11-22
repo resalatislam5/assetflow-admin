@@ -221,16 +221,12 @@ const ProductList = () => {
             ),
           },
           {
-            dataIndex: 'is_featured',
-            key: 'is_featured',
-            title: 'Tags',
+            dataIndex: 'is_pos_favorite',
+            key: 'is_pos_favorite',
+            title: 'POS Pin',
             width: 90,
-            render: (_, record: IProductList) => (
-              <Space orientation='vertical' size={2}>
-                {record.is_featured && <Tag color='gold'>FEATURED</Tag>}
-                {record.is_pos_favorite && <Tag color='magenta'>POS</Tag>}
-              </Space>
-            ),
+            render: (_, record: IProductList) =>
+              record.is_pos_favorite ? <Tag color='magenta'>POS</Tag> : null,
           },
           {
             dataIndex: 'created_at',

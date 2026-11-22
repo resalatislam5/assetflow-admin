@@ -87,17 +87,11 @@ const UpdateProductPage = () => {
             ? Number(p.warranty_days)
             : 0,
         status: p.status,
-        is_featured: Boolean(p.is_featured),
         is_pos_favorite: Boolean(p.is_pos_favorite),
         pos_display_order:
           p.pos_display_order !== undefined && p.pos_display_order !== null
             ? Number(p.pos_display_order)
             : 0,
-        weight_grams:
-          p.weight_grams !== undefined && p.weight_grams !== null
-            ? Number(p.weight_grams)
-            : undefined,
-        tags: p.tags || [],
         short_description: p.short_description,
         description: p.description,
         has_variants: hasVariants,
@@ -237,12 +231,6 @@ const UpdateProductPage = () => {
         (values.pos_display_order as unknown as string) !== ''
           ? Number(values.pos_display_order)
           : 0,
-      weight_grams:
-        values.weight_grams !== undefined &&
-        values.weight_grams !== null &&
-        (values.weight_grams as unknown as string) !== ''
-          ? Number(values.weight_grams)
-          : undefined,
       has_variants: Boolean(values.has_variants),
       variants:
         values.has_variants && values.variants?.length
